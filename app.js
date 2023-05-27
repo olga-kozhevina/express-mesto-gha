@@ -1,22 +1,44 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const usersRoutes = require('./routes/users');
+const bodyParser = require('body-parser');
+const usersRouter = require('./routes/users');
+const cardsRouter = require('./routes/cards');
 const { STATUS_CODES } = require('./utils/constants');
 
-const app = express();
-const port = 3000;
+const { PORT = 3000, MONGO_URL = 'mongodb://127.0.0.1/mestodb' } = process.env;
 
-mongoose.connect('mongodb://localhost:27017/mestodb', {
+const app = express();
+
+// подключение к MongoDB
+mongoose.connect(MONGO_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+})
+  .then(() => console.log('Database is connected'))
+  .catch((err) => console.log('Error connecting to the database', err));
+
+mongoose.set({ runValidators: true });
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// временное решение авторизации
+app.use((req, res, next) => {
+  req.user = {
+    _id: '6472023f9f2c783c6b9aa806',
+  };
+  next();
 });
 
-app.use(express.json());
+// руты миддлвэры
+app.use('/', usersRouter);
+app.use('/', cardsRouter);
 
-// middleware routes
-app.use('/users', usersRoutes);
+app.all('/*', (req, res) => {
+  res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Page does not exist' });
+});
 
-// middleware error handling
+// ошибки миддлвэры
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || STATUS_CODES.SERVER_ERROR;
   const message = err.message || 'An error occurred on the server';
@@ -24,6 +46,6 @@ app.use((err, req, res, next) => {
   res.status(statusCode).send({ message });
 });
 
-app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`App listening on port ${PORT}`);
 });

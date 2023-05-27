@@ -11,6 +11,7 @@ const createCard = async (req, res, next) => {
   try {
     const { name, link } = req.body;
     const card = await Card.create({ name, link, owner: req.user._id });
+    console.log(req.user._id);
 
     res.status(STATUS_CODES.CREATED).send({ card });
   } catch (err) {
