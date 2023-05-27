@@ -36,7 +36,7 @@ const deleteCard = async (req, res, next) => {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
       err.message = 'Incorrect search data entered';
     }
-    next(err);
+    return next(err);
   }
 };
 
@@ -57,7 +57,7 @@ const likeCard = async (req, res, next) => {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
       err.message = 'Incorrect search data entered';
     }
-    next(err);
+    return next(err);
   }
 };
 
@@ -78,7 +78,7 @@ const dislikeCard = async (req, res, next) => {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
       err.message = 'Incorrect search data entered';
     }
-    next(err);
+    return next(err);
   }
 };
 
