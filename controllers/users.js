@@ -29,13 +29,13 @@ const getUserById = async (req, res, next) => {
     if (!user) {
       return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'User not found' });
     }
-    res.status(STATUS_CODES.OK).send({ data: user });
+    return res.status(STATUS_CODES.OK).send({ data: user });
   } catch (err) {
     if (err.name === 'CastError') {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
       err.message = 'Incorrect search data entered';
     }
-    next(err);
+    return next(err);
   }
 };
 
@@ -47,13 +47,13 @@ const updateUserAvatar = async (req, res, next) => {
     if (!user) {
       return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'User not found' });
     }
-    res.status(STATUS_CODES.OK).send(user);
+    return res.status(STATUS_CODES.OK).send(user);
   } catch (err) {
     if (err.name === 'ValidationError') {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
       err.message = 'Incorrect data entered when updating the avatar';
     }
-    next(err);
+    return next(err);
   }
 };
 
@@ -65,14 +65,14 @@ const updateUserProfile = async (req, res, next) => {
     if (!user) {
       return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'User not found' });
     }
-    res.status(STATUS_CODES.OK).send(user);
+    return res.status(STATUS_CODES.OK).send(user);
   } catch (err) {
     if (err.name === 'ValidationError') {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
       err.message = 'Incorrect data entered when updating profile';
     }
 
-    next(err);
+    return next(err);
   }
 };
 

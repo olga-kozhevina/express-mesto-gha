@@ -30,7 +30,7 @@ const deleteCard = async (req, res, next) => {
     if (!card) {
       return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Card not found' });
     }
-    res.status(STATUS_CODES.OK).send({ data: card });
+    return res.status(STATUS_CODES.OK).send({ data: card });
   } catch (err) {
     if (err.name === 'CastError') {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
@@ -51,7 +51,7 @@ const likeCard = async (req, res, next) => {
     if (!card) {
       return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Card not found' });
     }
-    res.status(STATUS_CODES.OK).send({ data: card });
+    return res.status(STATUS_CODES.OK).send({ data: card });
   } catch (err) {
     if (err.name === 'CastError') {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
@@ -72,7 +72,7 @@ const dislikeCard = async (req, res, next) => {
     if (!card) {
       return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Card not found' });
     }
-    res.status(STATUS_CODES.OK).send({ data: card });
+    return res.status(STATUS_CODES.OK).send({ data: card });
   } catch (err) {
     if (err.name === 'CastError') {
       err.statusCode = STATUS_CODES.BAD_REQUEST;
