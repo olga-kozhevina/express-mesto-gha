@@ -3,7 +3,7 @@ const { STATUS_CODES } = require('../utils/constants');
 
 const getCards = (req, res, next) => {
   Card.find({})
-    .then((cards) => res.status(STATUS_CODES.OK).send({ cards }))
+    .then((cards) => res.send({ cards }))
     .catch((err) => next(err));
 };
 
