@@ -3,9 +3,17 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const { errors } = require('celebrate');
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
+const auth = require('./middlewares/auth');
 const { STATUS_CODES } = require('./utils/constants');
+const NotFoundError = require('./utils/errors/NotFoundError');
+const { login, createUser } = require('./controllers/users');
+const {
+  signinValidator,
+  signupValidator,
+} = require('./middlewares/validation');
 
 const { PORT = 3000, MONGO_URL = 'mongodb://127.0.0.1/mestodb' } = process.env;
 
@@ -35,20 +43,16 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// временное решение авторизации
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6472023f9f2c783c6b9aa806',
-  };
-  next();
-});
+// Обработчики POST-запросов signin/signup
+app.post('/signin', signinValidator, login);
+app.post('/signup', signupValidator, createUser);
 
 // руты миддлвэры
-app.use('/', usersRouter);
-app.use('/', cardsRouter);
+app.use('/users', auth, usersRouter);
+app.use('/cards', auth, cardsRouter);
 
-app.all('/*', (req, res) => {
-  res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Page does not exist' });
+app.all('/*', (req, res, next) => {
+  next(new NotFoundError('Page does not exist'));
 });
 
 // ошибки миддлвэры
@@ -59,6 +63,9 @@ app.use((err, req, res, next) => {
   res.status(statusCode).send({ message });
   next();
 });
+
+// Обработка ошибок Joi validation
+app.use(errors());
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

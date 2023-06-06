@@ -1,5 +1,8 @@
 const Card = require('../models/Card');
 const { STATUS_CODES } = require('../utils/constants');
+const NotFoundError = require('../utils/errors/NotFoundError');
+const BadRequestError = require('../utils/errors/BadRequestError');
+const ForbiddenError = require('../utils/errors/ForbiddenError');
 
 const getCards = (req, res, next) => {
   Card.find({})
@@ -16,8 +19,7 @@ const createCard = async (req, res, next) => {
     res.status(STATUS_CODES.CREATED).send({ card });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      err.statusCode = STATUS_CODES.BAD_REQUEST;
-      err.message = 'Incorrect data entered when creating card';
+      throw new BadRequestError('Incorrect data entered when creating card');
     }
     next(err);
   }
@@ -25,16 +27,23 @@ const createCard = async (req, res, next) => {
 
 const deleteCard = async (req, res, next) => {
   try {
-    const card = await Card.findByIdAndRemove(req.params.cardId);
+    const card = await Card.findById(req.params.cardId);
 
     if (!card) {
-      return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Card not found' });
+      throw new NotFoundError('Card not found');
     }
-    return res.status(STATUS_CODES.OK).send({ data: card });
+
+    // проверяем, является ли текущий пользователь владельцем карточки
+    if (card.owner.toString() !== req.user._id) {
+      throw new ForbiddenError('You do not have permission to delete this card.');
+    }
+
+    // если текущий пользователь = владелец карточки, то удаляем ее
+    await Card.deleteOne(card);
+    return res.status(STATUS_CODES.OK).send({ message: 'Card deleted successfully' });
   } catch (err) {
     if (err.name === 'CastError') {
-      err.statusCode = STATUS_CODES.BAD_REQUEST;
-      err.message = 'Incorrect search data entered';
+      throw new BadRequestError('Incorrect search data entered');
     }
     return next(err);
   }
@@ -49,13 +58,12 @@ const likeCard = async (req, res, next) => {
     );
 
     if (!card) {
-      return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Card not found' });
+      throw new NotFoundError('Card not found');
     }
     return res.status(STATUS_CODES.OK).send({ data: card });
   } catch (err) {
     if (err.name === 'CastError') {
-      err.statusCode = STATUS_CODES.BAD_REQUEST;
-      err.message = 'Incorrect search data entered';
+      throw new BadRequestError('Incorrect search data entered');
     }
     return next(err);
   }
@@ -70,13 +78,12 @@ const dislikeCard = async (req, res, next) => {
     );
 
     if (!card) {
-      return res.status(STATUS_CODES.NOT_FOUND).send({ message: 'Card not found' });
+      throw new NotFoundError('Card not found');
     }
     return res.status(STATUS_CODES.OK).send({ data: card });
   } catch (err) {
     if (err.name === 'CastError') {
-      err.statusCode = STATUS_CODES.BAD_REQUEST;
-      err.message = 'Incorrect search data entered';
+      throw new BadRequestError('Incorrect search data entered');
     }
     return next(err);
   }
