@@ -8,7 +8,7 @@ const { STATUS_CODES } = require('../utils/constants');
 
 const getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.send(STATUS_CODES.OK).send({ users }))
+    .then((users) => res.send(STATUS_CODES.OK).send({ data: users }))
     .catch(next);
 };
 
@@ -102,7 +102,7 @@ const updateUserAvatar = async (req, res, next) => {
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    return res.status(STATUS_CODES.OK).send(user);
+    return res.status(STATUS_CODES.OK).send({ data: user });
   } catch (err) {
     if (err.name === 'ValidationError') {
       throw new BadRequestError('Incorrect data entered when updating the avatar');
@@ -119,7 +119,7 @@ const updateUserProfile = async (req, res, next) => {
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    return res.status(STATUS_CODES.OK).send(user);
+    return res.status(STATUS_CODES.OK).send({ data: user });
   } catch (err) {
     if (err.name === 'ValidationError') {
       throw new BadRequestError('Incorrect data entered when updating profile');
