@@ -2,14 +2,52 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const NotFoundError = require('../utils/errors/NotFoundError');
-const UnauthorizedError = require('../utils/errors/UnauthorizedError');
 const BadRequestError = require('../utils/errors/BadRequestError');
+const ConflictError = require('../utils/errors/ConflictError');
 const { STATUS_CODES } = require('../utils/constants');
 
 const getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send(STATUS_CODES.OK).send({ users }))
     .catch(next);
+};
+
+const createUser = async (req, res, next) => {
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password,
+  } = req.body;
+
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
+    .then(() => res.status(STATUS_CODES.CREATED)
+      .send({
+        data: {
+          name,
+          about,
+          avatar,
+          email,
+        },
+      })
+    )
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(new BadRequestError('Incorrect data entered when creating user'));
+      }
+      if (err.code === 11000) {
+        return next(new ConflictError('User with this email exists'));
+      }
+      return next(err);
+    });
 };
 
 const login = (req, res, next) => {
@@ -20,47 +58,9 @@ const login = (req, res, next) => {
       const token = jwt.sign({ _id: user._id }, 'super-secret-key', { expiresIn: '7d' });
       res.send({ _id: token });
     })
-    .catch((next));
-};
-
-const createUser = async (req, res, next) => {
-  try {
-    const {
-      name,
-      about,
-      avatar,
-      email,
-      password,
-    } = req.body;
-
-    // проверяем, есть ли такой email в БД
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      throw new BadRequestError('User with this email already exists');
-    }
-
-    // хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      about,
-      avatar,
-      email,
-      password: hashedPassword,
+    .catch((err) => {
+      next(err);
     });
-
-    // проверяем, чтобы пароль не возвращался в ответе
-    const userWithoutPassword = user.toObject();
-    delete userWithoutPassword.password;
-
-    return res.status(STATUS_CODES.CREATED).send({ data: userWithoutPassword });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      throw new BadRequestError('Incorrect data entered when creating user');
-    }
-    return next(err);
-  }
 };
 
 const getCurrentUser = async (req, res, next) => {
