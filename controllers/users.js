@@ -103,7 +103,11 @@ const getUserById = async (req, res, next) => {
 const updateUserAvatar = async (req, res, next) => {
   try {
     const { avatar } = req.body;
-    const user = await User.findByIdAndUpdate(req.user._id, { avatar }, { new: true });
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar },
+      { new: true, runValidators: true },
+    );
 
     if (!user) {
       throw new NotFoundError('User not found');
@@ -120,13 +124,11 @@ const updateUserAvatar = async (req, res, next) => {
 const updateUserProfile = async (req, res, next) => {
   try {
     const { name, about } = req.body;
-
-    // Проверка длины имени
-    if (name && (name.length < 2 || name.length > 30)) {
-      throw new BadRequestError('Name should be 2 to 30 characters long');
-    }
-
-    const user = await User.findByIdAndUpdate(req.user._id, { name, about }, { new: true });
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, about },
+      { new: true, runValidators: true },
+    );
 
     if (!user) {
       throw new NotFoundError('User not found');
