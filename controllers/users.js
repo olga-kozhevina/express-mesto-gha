@@ -12,37 +12,15 @@ const getUsers = (req, res, next) => {
     .catch(next);
 };
 
-const login = async (req, res, next) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
 
-  try {
-    // получаем пользователя по email и включаем пароль в выборку
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
-      throw new UnauthorizedError('Invalid email or password');
-    }
-
-    // сравниваем введенный пароль и хешированный пароль
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new UnauthorizedError('Invalid email or password');
-    }
-
-    // создаем JWT
-    const token = jwt.sign({ _id: user._id }, 'super-secret-key', { expiresIn: '7d' });
-
-    // записываем токен в cookie и отправляем клиенту
-    res.cookie('jwt', token, {
-      maxAge: 3600000 * 24 * 7,
-      httpOnly: true,
-      sameSite: 'none',
-      secure: true,
-    });
-
-    return res.send({ message: 'Successfully logged in' });
-  } catch (err) {
-    return next(err);
-  }
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'super-secret-key', { expiresIn: '7d' });
+      res.send({ _id: token });
+    })
+    .catch((next));
 };
 
 const createUser = async (req, res, next) => {
