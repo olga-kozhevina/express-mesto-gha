@@ -55,6 +55,9 @@ app.all('/*', (req, res, next) => {
   next(new NotFoundError('Page does not exist'));
 });
 
+// Обработка ошибок Joi validation
+app.use(errors());
+
 // ошибки миддлвэры
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || STATUS_CODES.SERVER_ERROR;
@@ -63,9 +66,6 @@ app.use((err, req, res, next) => {
   res.status(statusCode).send({ message });
   next();
 });
-
-// Обработка ошибок Joi validation
-app.use(errors());
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
