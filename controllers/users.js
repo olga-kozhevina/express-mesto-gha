@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const NotFoundError = require('../utils/errors/NotFoundError');
@@ -79,8 +80,14 @@ const getCurrentUser = async (req, res, next) => {
 };
 
 const getUserById = async (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new BadRequestError('Invalid user id');
+  }
+
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(userId);
 
     if (!user) {
       throw new NotFoundError('User not found');
