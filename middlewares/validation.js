@@ -17,14 +17,14 @@ const userInfoValidator = celebrate({
 
 const userAvatarValidator = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().pattern(new RegExp(urlPattern)),
+    avatar: Joi.string().regex(urlPattern),
   }),
 });
 
 const cardValidator = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required().pattern(new RegExp(urlPattern)),
+    link: Joi.string().required().regex(urlPattern),
   }),
 });
 
@@ -47,7 +47,7 @@ const signupValidator = celebrate({
     password: Joi.string().required(),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(new RegExp(urlPattern)),
+    avatar: Joi.string().regex(urlPattern),
   }),
 });
 
