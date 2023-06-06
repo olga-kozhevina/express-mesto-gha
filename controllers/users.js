@@ -37,8 +37,7 @@ const createUser = async (req, res, next) => {
           avatar,
           email,
         },
-      })
-    )
+      }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return next(new BadRequestError('Incorrect data entered when creating user'));
