@@ -8,8 +8,8 @@ const { STATUS_CODES } = require('../utils/constants');
 
 const getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.send({ users }))
-    .catch((err) => next(err));
+    .then((users) => res.send(STATUS_CODES.OK).send({ users }))
+    .catch(next);
 };
 
 const login = async (req, res, next) => {
@@ -72,7 +72,11 @@ const createUser = async (req, res, next) => {
       password: hashedPassword,
     });
 
-    return res.status(STATUS_CODES.CREATED).send({ data: user });
+    // проверяем, чтобы пароль не возвращался в ответе
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password;
+
+    return res.status(STATUS_CODES.CREATED).send({ data: userWithoutPassword });
   } catch (err) {
     if (err.name === 'ValidationError') {
       throw new BadRequestError('Incorrect data entered when creating user');
