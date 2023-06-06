@@ -1,6 +1,6 @@
 const { STATUS_CODES } = require('../constants');
 
-const ServerError = (err, req, res, next) => {
+const ServerError = (err, req, res) => {
   const { statusCode = STATUS_CODES.SERVER_ERROR, message } = err;
 
   res
