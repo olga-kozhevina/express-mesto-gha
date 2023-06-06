@@ -122,8 +122,8 @@ const updateUserProfile = async (req, res, next) => {
     const { name, about } = req.body;
 
     // Проверка длины имени
-    if (name && name.length < 2) {
-      throw new BadRequestError('Name should be at least 2 characters long');
+    if (name && (name.length < 2 || name.length > 30)) {
+      throw new BadRequestError('Name should be 2 to 30 characters long');
     }
 
     const user = await User.findByIdAndUpdate(req.user._id, { name, about }, { new: true });
