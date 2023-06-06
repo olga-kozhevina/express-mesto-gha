@@ -82,11 +82,10 @@ const getCurrentUser = async (req, res, next) => {
 const getUserById = async (req, res, next) => {
   const { userId } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    throw new BadRequestError('Invalid user id');
-  }
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new BadRequestError('Invalid user id');
+    }
     const user = await User.findById(userId);
 
     if (!user) {
