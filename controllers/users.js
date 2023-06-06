@@ -8,7 +8,7 @@ const { STATUS_CODES } = require('../utils/constants');
 
 const getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.send(STATUS_CODES.OK).send({ data: users }))
+    .then((users) => res.status(STATUS_CODES.OK).send({ data: users }))
     .catch(next);
 };
 
@@ -30,7 +30,7 @@ const createUser = async (req, res, next) => {
       password: hash,
     }))
     .then(() => res.status(STATUS_CODES.CREATED)
-      .send({
+      .json({
         data: {
           name,
           about,
@@ -69,7 +69,7 @@ const getCurrentUser = async (req, res, next) => {
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    return res.status(STATUS_CODES.OK).send({ data: user });
+    return res.status(STATUS_CODES.OK).json({ data: user });
   } catch (err) {
     if (err.name === 'CastError') {
       throw new BadRequestError('Incorrect search data entered');
@@ -85,7 +85,7 @@ const getUserById = async (req, res, next) => {
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    return res.status(STATUS_CODES.OK).send({ data: user });
+    return res.status(STATUS_CODES.OK).json({ data: user });
   } catch (err) {
     if (err.name === 'CastError') {
       throw new BadRequestError('Incorrect search data entered');
