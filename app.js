@@ -60,7 +60,7 @@ app.use(errors());
 
 // ошибки миддлвэры
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || err.status || STATUS_CODES.SERVER_ERROR;
+  const statusCode = err.statusCode || STATUS_CODES.SERVER_ERROR;
   const message = err.message || 'An error occurred on the server';
 
   res.status(statusCode).send({ message });

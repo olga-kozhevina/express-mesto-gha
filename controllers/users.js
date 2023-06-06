@@ -136,7 +136,7 @@ const updateUserProfile = async (req, res, next) => {
     return res.status(STATUS_CODES.OK).send({ data: user });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      throw new BadRequestError('Incorrect data entered when updating profile');
+      return next(err);
     }
     return next(err);
   }
