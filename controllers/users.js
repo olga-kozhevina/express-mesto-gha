@@ -1,24 +1,24 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const user = require('../models/user');
+const User = require('../models/user');
 const { STATUS_CODES } = require('../utils/constants');
 const NotFoundError = require('../utils/errors/NotFoundError');
 const BadRequestError = require('../utils/errors/BadRequestError');
 const ConflictError = require('../utils/errors/ConflictError');
 
 const getUsers = (req, res, next) => {
-  user.find({})
+  User.find({})
     .then((users) => res.status(STATUS_CODES.OK).send({ users }))
     .catch(next);
 };
 
 const findUser = (id, next) => {
-  user.findById(id)
-    .then((users) => {
-      if (!users) {
+  User.findById(id)
+    .then((user) => {
+      if (!user) {
         throw new NotFoundError('User not found');
       }
-      return users;
+      return user;
     })
     .catch(next);
 };
@@ -33,7 +33,7 @@ const createUser = (req, res, next) => {
   } = req.body;
 
   bcrypt.hash(password, 10)
-    .then((hash) => user.create({
+    .then((hash) => User.create({
       name,
       about,
       avatar,
@@ -63,9 +63,9 @@ const createUser = (req, res, next) => {
 const login = (req, res, next) => {
   const { email, password } = req.body;
 
-  user.findUserByCredentials(email, password)
-    .then((users) => {
-      const token = jwt.sign({ _id: users._id }, 'super-secret-key', { expiresIn: '7d' });
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'super-secret-key', { expiresIn: '7d' });
       res.send({ _id: token });
     })
     .catch((err) => next(err));
@@ -73,13 +73,13 @@ const login = (req, res, next) => {
 
 const getCurrentUser = (req, res, next) => {
   findUser(req.user._id, next)
-    .then((users) => res.status(STATUS_CODES.OK).send({ data: users }))
+    .then((user) => res.status(STATUS_CODES.OK).send({ data: user }))
     .catch(next);
 };
 
 const getUserById = (req, res, next) => {
   findUser(req.params.userId, next)
-    .then((users) => res.status(STATUS_CODES.OK).send({ data: users }))
+    .then((user) => res.status(STATUS_CODES.OK).send({ data: user }))
     .catch(next);
 };
 
@@ -88,16 +88,16 @@ const updateUserData = (fieldsToUpdate, errorMessage) => (req, res, next) => {
     if (req.body[field]) acc[field] = req.body[field];
     return acc;
   }, {});
-  return user.findByIdAndUpdate(
-    req.users._id,
+  return User.findByIdAndUpdate(
+    req.user._id,
     data,
     { new: true, runValidators: true },
   )
-    .then((users) => {
-      if (!users) {
+    .then((user) => {
+      if (!user) {
         throw new NotFoundError('User not found');
       }
-      res.status(STATUS_CODES.OK).send(users);
+      res.status(STATUS_CODES.OK).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {

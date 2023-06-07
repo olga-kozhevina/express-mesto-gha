@@ -1,19 +1,19 @@
-const card = require('../models/card');
+const Card = require('../models/card');
 const { STATUS_CODES } = require('../utils/constants');
 const NotFoundError = require('../utils/errors/NotFoundError');
 const BadRequestError = require('../utils/errors/BadRequestError');
 const ForbiddenError = require('../utils/errors/ForbiddenError');
 
 const getCards = (req, res, next) => {
-  card.find({})
+  Card.find({})
     .then((cards) => res.status(STATUS_CODES.OK).send({ cards }))
     .catch(next);
 };
 
 const createCard = (req, res, next) => {
   const { name, link } = req.body;
-  return card.create({ name, link, owner: req.user._id })
-    .then((cards) => res.status(STATUS_CODES.CREATED).send({ cards }))
+  return Card.create({ name, link, owner: req.user._id })
+    .then((card) => res.status(STATUS_CODES.CREATED).send({ card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return next(new BadRequestError('Incorrect data entered when creating card'));
@@ -23,16 +23,16 @@ const createCard = (req, res, next) => {
 };
 
 const deleteCard = (req, res, next) => {
-  card.findById(req.params.cardId)
-    .then((cards) => {
-      if (!cards) {
+  Card.findById(req.params.cardId)
+    .then((card) => {
+      if (!card) {
         throw new NotFoundError('Card not found');
       }
       // проверяем, является ли текущий пользователь владельцем карточки
-      if (cards.owner.toString() !== req.user._id) {
+      if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError('You do not have permission to delete this card');
       }
-      cards.deleteOne()
+      card.deleteOne()
         .then(() => res.send({ message: 'Card deleted successfully' }))
         .catch(next);
     })
@@ -45,16 +45,16 @@ const deleteCard = (req, res, next) => {
 };
 
 const likeCard = (req, res, next) => {
-  card.findByIdAndUpdate(
+  Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((cards) => {
-      if (!cards) {
+    .then((card) => {
+      if (!card) {
         throw new NotFoundError('Card not found');
       }
-      res.status(STATUS_CODES.OK).send({ data: cards });
+      res.status(STATUS_CODES.OK).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -65,16 +65,16 @@ const likeCard = (req, res, next) => {
 };
 
 const dislikeCard = (req, res, next) => {
-  card.findByIdAndUpdate(
+  Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((cards) => {
-      if (!cards) {
+    .then((card) => {
+      if (!card) {
         throw new NotFoundError('Card not found');
       }
-      res.status(STATUS_CODES.OK).send({ data: cards });
+      res.status(STATUS_CODES.OK).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
