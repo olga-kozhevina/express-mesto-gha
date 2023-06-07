@@ -1,7 +1,7 @@
 [![Tests](../../actions/workflows/tests-13-sprint.yml/badge.svg)](../../actions/workflows/tests-13-sprint.yml) [![Tests](../../actions/workflows/tests-14-sprint.yml/badge.svg)](../../actions/workflows/tests-14-sprint.yml)
 # Проект Mesto фронтенд + бэкенд
 
-13 спринт: создание сервера для проекта Mesto 
+13 спринт: создание сервера для проекта Mesto    
 14 спринт: продолжаем писать бэк для проекта. Добавили логику для регистрации и авторизации.
 ## Информация о проекте
 **В данной работе мы осуществили разработку серверной части нашего проекта, включая:**
