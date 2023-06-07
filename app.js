@@ -1,21 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
-const usersRouter = require('./routes/users');
-const cardsRouter = require('./routes/cards');
-const auth = require('./middlewares/auth');
-const { STATUS_CODES } = require('./utils/constants');
-const NotFoundError = require('./utils/errors/NotFoundError');
-const { login, createUser } = require('./controllers/users');
-const {
-  signinValidator,
-  signupValidator,
-} = require('./middlewares/validation');
-
-const { PORT = 3000, MONGO_URL = 'mongodb://127.0.0.1/mestodb' } = process.env;
+const { PORT, MONGO_URL } = require('./config');
+const router = require('./routes');
+const errorHandler = require('./utils/errorHandler');
 
 const app = express();
 
@@ -29,8 +19,8 @@ mongoose.connect(MONGO_URL, {
 
 mongoose.set({ runValidators: true });
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // настраиваем заголовки
 app.use(helmet());
@@ -43,37 +33,14 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Обработчики POST-запросов signin/signup
-app.post('/signin', signinValidator, login);
-app.post('/signup', signupValidator, createUser);
-
-// руты миддлвэры
-app.use(auth);
-app.use('/', usersRouter);
-app.use('/', cardsRouter);
-
-app.all('/*', (req, res, next) => {
-  next(new NotFoundError('Page does not exist'));
-});
+// используем корневой рутер
+app.use('/', router);
 
 // Обработка ошибок Joi validation
 app.use(errors());
 
-// ошибки миддлвэры
-app.use((err, req, res, next) => {
-  const {
-    statusCode = STATUS_CODES.SERVER_ERROR,
-    message,
-  } = err;
-
-  res
-    .status(statusCode)
-    .send({
-      message: statusCode === STATUS_CODES.SERVER_ERROR ? 'An error occurred on the server' : message,
-    });
-
-  next();
-});
+// подключаем централизованный обработчик ошибок
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

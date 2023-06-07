@@ -1,4 +1,4 @@
-const Card = require('../models/Card');
+const Card = require('../models/card');
 const { STATUS_CODES } = require('../utils/constants');
 const NotFoundError = require('../utils/errors/NotFoundError');
 const BadRequestError = require('../utils/errors/BadRequestError');
@@ -32,12 +32,12 @@ const deleteCard = (req, res, next) => {
       if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError('You do not have permission to delete this card');
       }
-      Card.findByIdAndRemove(req.params.cardId)
+      card.deleteOne()
         .then(() => res.send({ message: 'Card deleted successfully' }))
         .catch(next);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
+      if (err.name === 'CastError') {
         return next(new BadRequestError('Incorrect search data entered'));
       }
       return next(err);

@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/user');
 const { STATUS_CODES } = require('../utils/constants');
 const NotFoundError = require('../utils/errors/NotFoundError');
 const BadRequestError = require('../utils/errors/BadRequestError');
@@ -9,6 +9,17 @@ const ConflictError = require('../utils/errors/ConflictError');
 const getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.status(STATUS_CODES.OK).send({ users }))
+    .catch(next);
+};
+
+const findUser = (id, next) => {
+  User.findById(id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+      return user;
+    })
     .catch(next);
 };
 
@@ -57,47 +68,29 @@ const login = (req, res, next) => {
       const token = jwt.sign({ _id: user._id }, 'super-secret-key', { expiresIn: '7d' });
       res.send({ _id: token });
     })
-    .catch((next));
+    .catch((err) => next(err));
 };
 
 const getCurrentUser = (req, res, next) => {
-  User.findById(req.user._id)
-    .then((user) => {
-      if (user) {
-        res.status(STATUS_CODES.OK).send({ data: user });
-      } else {
-        next(new NotFoundError('User not found'));
-      }
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Incorrect search data entered'));
-      }
-      return next(err);
-    });
+  findUser(req.user._id, next)
+    .then((user) => res.status(STATUS_CODES.OK).send({ data: user }))
+    .catch(next);
 };
 
 const getUserById = (req, res, next) => {
-  User.findById(req.params.userId)
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError('User not found');
-      }
-      res.status(STATUS_CODES.OK).send({ data: user });
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Incorrect search data entered'));
-      }
-      return next(err);
-    });
+  findUser(req.params.userId, next)
+    .then((user) => res.status(STATUS_CODES.OK).send({ data: user }))
+    .catch(next);
 };
 
-const updateUserAvatar = (req, res, next) => {
-  const { avatar } = req.body;
+const updateUserData = (fieldsToUpdate, errorMessage) => (req, res, next) => {
+  const data = fieldsToUpdate.reduce((acc, field) => {
+    if (req.body[field]) acc[field] = req.body[field];
+    return acc;
+  }, {});
   return User.findByIdAndUpdate(
     req.user._id,
-    { avatar },
+    data,
     { new: true, runValidators: true },
   )
     .then((user) => {
@@ -108,32 +101,14 @@ const updateUserAvatar = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Incorrect data entered when updating the avatar'));
+        return next(new BadRequestError(errorMessage));
       }
       return next(err);
     });
 };
 
-const updateUserProfile = (req, res, next) => {
-  const { name, about } = req.body;
-  return User.findByIdAndUpdate(
-    req.user._id,
-    { name, about },
-    { new: true, runValidators: true },
-  )
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError('User not found');
-      }
-      res.status(STATUS_CODES.OK).send(user);
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Incorrect data entered when updating profile'));
-      }
-      return next(err);
-    });
-};
+const updateUserAvatar = updateUserData(['avatar'], 'Incorrect data entered when updating the avatar');
+const updateUserProfile = updateUserData(['name', 'about'], 'Incorrect data entered when updating profile');
 
 module.exports = {
   getUsers,
