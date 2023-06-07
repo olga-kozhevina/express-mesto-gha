@@ -1,6 +1,6 @@
 const { celebrate, Joi } = require('celebrate');
 
-const urlPattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)$/;
+const urlPattern = /^https?:\/\/(www\.)?[0-9a-zA-Z]+([.|-]{1}[0-9a-zA-Z]+)*\.[0-9a-zA-Z-]+(\/[0-9a-zA-Z\-._~:/?#[\]@!$&'()*+,;=]*#?)?$/;
 
 const userIdValidator = celebrate({
   params: Joi.object().keys({
@@ -10,8 +10,8 @@ const userIdValidator = celebrate({
 
 const userInfoValidator = celebrate({
   body: Joi.object().keys({
-    name: Joi.string().min(2).max(30).required(),
-    about: Joi.string().min(2).max(30).required(),
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
   }),
 });
 

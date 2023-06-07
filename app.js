@@ -48,8 +48,9 @@ app.post('/signin', signinValidator, login);
 app.post('/signup', signupValidator, createUser);
 
 // руты миддлвэры
-app.use('/users', auth, usersRouter);
-app.use('/cards', auth, cardsRouter);
+app.use(auth);
+app.use('/', usersRouter);
+app.use('/', cardsRouter);
 
 app.all('/*', (req, res, next) => {
   next(new NotFoundError('Page does not exist'));
@@ -60,10 +61,17 @@ app.use(errors());
 
 // ошибки миддлвэры
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || STATUS_CODES.SERVER_ERROR;
-  const message = err.message || 'An error occurred on the server';
+  const {
+    statusCode = STATUS_CODES.SERVER_ERROR,
+    message,
+  } = err;
 
-  res.status(statusCode).send({ message });
+  res
+    .status(statusCode)
+    .send({
+      message: statusCode === STATUS_CODES.SERVER_ERROR ? 'An error occurred on the server' : message,
+    });
+
   next();
 });
 

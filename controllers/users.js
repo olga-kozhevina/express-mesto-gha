@@ -1,19 +1,18 @@
 const bcrypt = require('bcrypt');
-const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { STATUS_CODES } = require('../utils/constants');
 const NotFoundError = require('../utils/errors/NotFoundError');
 const BadRequestError = require('../utils/errors/BadRequestError');
 const ConflictError = require('../utils/errors/ConflictError');
-const { STATUS_CODES } = require('../utils/constants');
 
 const getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.status(STATUS_CODES.OK).send({ data: users }))
+    .then((users) => res.status(STATUS_CODES.OK).send({ users }))
     .catch(next);
 };
 
-const createUser = async (req, res, next) => {
+const createUser = (req, res, next) => {
   const {
     name,
     about,
@@ -31,14 +30,15 @@ const createUser = async (req, res, next) => {
       password: hash,
     }))
     .then(() => res.status(STATUS_CODES.CREATED)
-      .json({
+      .send({
         data: {
           name,
           about,
           avatar,
           email,
         },
-      }))
+      },
+      ))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return next(new BadRequestError('Incorrect data entered when creating user'));
@@ -58,88 +58,82 @@ const login = (req, res, next) => {
       const token = jwt.sign({ _id: user._id }, 'super-secret-key', { expiresIn: '7d' });
       res.send({ _id: token });
     })
+    .catch((next));
+};
+
+const getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (user) {
+        res.status(STATUS_CODES.OK).send({ data: user });
+      } else {
+        next(new NotFoundError('User not found'));
+      }
+    })
     .catch((err) => {
-      next(err);
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Incorrect search data entered'));
+      }
+      return next(err);
     });
 };
 
-const getCurrentUser = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-      throw new NotFoundError('User not found');
-    }
-    return res.status(STATUS_CODES.OK).json({ data: user });
-  } catch (err) {
-    if (err.name === 'CastError') {
-      throw new BadRequestError('Incorrect search data entered');
-    }
-    return next(err);
-  }
-};
-
-const getUserById = async (req, res, next) => {
-  const { userId } = req.params;
-
-  try {
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new BadRequestError('Invalid user id');
-    }
-    const user = await User.findById(userId);
-
-    if (!user) {
-      throw new NotFoundError('User not found');
-    }
-    return res.status(STATUS_CODES.OK).json({ data: user });
-  } catch (err) {
-    if (err.name === 'CastError') {
-      throw new BadRequestError('Incorrect search data entered');
-    }
-    return next(err);
-  }
-};
-
-const updateUserAvatar = async (req, res, next) => {
-  try {
-    const { avatar } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { avatar },
-      { new: true, runValidators: true },
-    );
-
-    if (!user) {
-      throw new NotFoundError('User not found');
-    }
-    return res.status(STATUS_CODES.OK).send({ data: user });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      throw new BadRequestError('Incorrect data entered when updating the avatar');
-    }
-    return next(err);
-  }
-};
-
-const updateUserProfile = async (req, res, next) => {
-  try {
-    const { name, about } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { name, about },
-      { new: true, runValidators: true },
-    );
-
-    if (!user) {
-      throw new NotFoundError('User not found');
-    }
-    return res.status(STATUS_CODES.OK).send({ data: user });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
+const getUserById = (req, res, next) => {
+  User.findById(req.params.userId)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+      res.status(STATUS_CODES.OK).send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Incorrect search data entered'));
+      }
       return next(err);
-    }
-    return next(err);
-  }
+    });
+};
+
+const updateUserAvatar = (req, res, next) => {
+  const { avatar } = req.body;
+  return User.findByIdAndUpdate(
+    req.user._id,
+    { avatar },
+    { new: true, runValidators: true },
+  )
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+      res.status(STATUS_CODES.OK).send(user);
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(new BadRequestError('Incorrect data entered when updating the avatar'));
+      }
+      return next(err);
+    });
+};
+
+const updateUserProfile = (req, res, next) => {
+  const { name, about } = req.body;
+  return User.findByIdAndUpdate(
+    req.user._id,
+    { name, about },
+    { new: true, runValidators: true },
+  )
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+      res.status(STATUS_CODES.OK).send(user);
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(new BadRequestError('Incorrect data entered when updating profile'));
+      }
+      return next(err);
+    });
 };
 
 module.exports = {

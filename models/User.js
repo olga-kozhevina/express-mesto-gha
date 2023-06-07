@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const { isURL, isEmail } = require('validator');
+const bcrypt = require('bcryptjs');
 const UnauthorizedError = require('../utils/errors/UnauthorizedError');
 
 const userSchema = new mongoose.Schema({
@@ -19,18 +19,17 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
-    validate: [isURL, 'Invalid URL'],
+    validate: [isURL],
   },
   email: {
     type: String,
     required: true,
     unique: true,
-    validate: [isEmail, 'Invalid email'],
+    validate: [isEmail],
   },
   password: {
     type: String,
     required: true,
-    minlength: 6,
     select: false,
   },
 });
@@ -44,7 +43,6 @@ userSchema.statics.findUserByCredentials = function findUserByCredentials(email,
           new UnauthorizedError('Incorrect email or password'),
         );
       }
-
       return bcrypt.compare(password, user.password).then((matched) => {
         if (!matched) {
           return Promise.reject(
