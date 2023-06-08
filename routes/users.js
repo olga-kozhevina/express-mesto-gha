@@ -16,7 +16,7 @@ const {
 usersRouter.get('/', getUsers);
 usersRouter.get('/me', getCurrentUser);
 usersRouter.get('/:userId', userIdValidator, getUserById);
-usersRouter.patch('/me/avatar', userAvatarValidator, updateUserAvatar);
 usersRouter.patch('/me', userInfoValidator, updateUserProfile);
+usersRouter.patch('/me/avatar', userAvatarValidator, updateUserAvatar);
 
 module.exports = usersRouter;

@@ -36,13 +36,18 @@ const createUser = (req, res, next) => {
   } = req.body;
 
   bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      name,
-      about,
-      avatar,
-      email,
-      password: hash,
-    }))
+    .then((hash) => {
+      const userData = {
+        email,
+        password: hash,
+      };
+
+      if (name) userData.name = name;
+      if (about) userData.about = about;
+      if (avatar) userData.avatar = avatar;
+
+      return User.create(userData);
+    })
     .then((user) => res.status(STATUS_CODES.CREATED)
       .send({
         name: user.name,
@@ -109,8 +114,8 @@ const updateUserData = (fieldsToUpdate, errorMessage) => (req, res, next) => {
     });
 };
 
-const updateUserAvatar = updateUserData(['avatar'], 'Incorrect data entered when updating the avatar');
 const updateUserProfile = updateUserData(['name', 'about'], 'Incorrect data entered when updating profile');
+const updateUserAvatar = updateUserData(['avatar'], 'Incorrect data entered when updating the avatar');
 
 module.exports = {
   getUsers,
