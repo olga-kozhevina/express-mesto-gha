@@ -36,24 +36,21 @@ const createUser = (req, res, next) => {
   } = req.body;
 
   bcrypt.hash(password, 10)
-    .then((hash) => {
-      const userData = {
-        email,
-        password: hash,
-      };
-
-      if (name) userData.name = name;
-      if (about) userData.about = about;
-      if (avatar) userData.avatar = avatar;
-
-      return User.create(userData);
-    })
-    .then((user) => res.status(STATUS_CODES.CREATED)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
+    .then(() => res.status(STATUS_CODES.CREATED)
       .send({
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-        email: user.email,
+        data: {
+          name,
+          about,
+          avatar,
+          email,
+        },
       }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
