@@ -12,16 +12,19 @@ const getUsers = (req, res, next) => {
     .catch(next);
 };
 
-const findUser = (id, next) => {
-  User.findById(id)
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError('User not found');
-      }
-      return user;
-    })
-    .catch(next);
-};
+const findUser = (id, next) => User.findById(id)
+  .then((user) => {
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+    return user;
+  })
+  .catch((err) => {
+    if (err.name === 'CastError') {
+      return next(new NotFoundError('User not found'));
+    }
+    return next(err);
+  });
 
 const createUser = (req, res, next) => {
   const {
@@ -40,14 +43,12 @@ const createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then(() => res.status(STATUS_CODES.CREATED)
+    .then(() => res.status(STATUS_CODES.OK)
       .send({
-        data: {
-          name,
-          about,
-          avatar,
-          email,
-        },
+        name,
+        about,
+        avatar,
+        email,
       }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -88,7 +89,8 @@ const updateUserData = (fieldsToUpdate, errorMessage) => (req, res, next) => {
     if (req.body[field]) acc[field] = req.body[field];
     return acc;
   }, {});
-  return User.findByIdAndUpdate(
+
+  User.findByIdAndUpdate(
     req.user._id,
     data,
     { new: true, runValidators: true },
@@ -97,7 +99,7 @@ const updateUserData = (fieldsToUpdate, errorMessage) => (req, res, next) => {
       if (!user) {
         throw new NotFoundError('User not found');
       }
-      res.status(STATUS_CODES.OK).send(user);
+      res.status(STATUS_CODES.OK).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {

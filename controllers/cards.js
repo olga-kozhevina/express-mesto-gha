@@ -13,7 +13,7 @@ const getCards = (req, res, next) => {
 const createCard = (req, res, next) => {
   const { name, link } = req.body;
   return Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.status(STATUS_CODES.CREATED).send({ card }))
+    .then((card) => res.status(STATUS_CODES.OK).send({ card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return next(new BadRequestError('Incorrect data entered when creating card'));
