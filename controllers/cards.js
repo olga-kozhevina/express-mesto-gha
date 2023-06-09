@@ -44,10 +44,12 @@ const deleteCard = (req, res, next) => {
     });
 };
 
-const likeCard = (req, res, next) => {
+const updateCardLikes = ({ action, errorMessage }) => (req, res, next) => {
+  const update = { [action]: { likes: req.user._id } };
+
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user._id } },
+    update,
     { new: true },
   )
     .then((card) => {
@@ -58,31 +60,20 @@ const likeCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(new BadRequestError('Incorrect search data entered'));
+        return next(new BadRequestError(errorMessage));
       }
       return next(err);
     });
 };
 
-const dislikeCard = (req, res, next) => {
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $pull: { likes: req.user._id } },
-    { new: true },
-  )
-    .then((card) => {
-      if (!card) {
-        throw new NotFoundError('Card not found');
-      }
-      res.status(STATUS_CODES.OK).send({ data: card });
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Incorrect search data entered'));
-      }
-      return next(err);
-    });
-};
+const likeCard = updateCardLikes({
+  action: '$addToSet',
+  errorMessage: 'Incorrect search data entered when liking card',
+});
+const dislikeCard = updateCardLikes({
+  action: '$pull',
+  errorMessage: 'Incorrect search data entered when disliking card',
+});
 
 module.exports = {
   getCards,
