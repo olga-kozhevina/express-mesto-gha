@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/user');
 const { STATUS_CODES } = require('../utils/constants');
 const NotFoundError = require('../utils/errors/NotFoundError');
 const BadRequestError = require('../utils/errors/BadRequestError');
@@ -86,7 +86,7 @@ const getUserById = (req, res, next) => {
     .catch(next);
 };
 
-const updateUserData = (fieldsToUpdate, errorMessage) => (req, res, next) => {
+const updateUserData = ({ fieldsToUpdate, errorMessage }) => (req, res, next) => {
   const data = fieldsToUpdate.reduce((acc, field) => {
     if (req.body[field]) acc[field] = req.body[field];
     return acc;
@@ -111,8 +111,14 @@ const updateUserData = (fieldsToUpdate, errorMessage) => (req, res, next) => {
     });
 };
 
-const updateUserProfile = updateUserData(['name', 'about'], 'Incorrect data entered when updating profile');
-const updateUserAvatar = updateUserData(['avatar'], 'Incorrect data entered when updating the avatar');
+const updateUserProfile = updateUserData({
+  fieldsToUpdate: ['name', 'about'],
+  errorMessage: 'Incorrect data entered when updating profile',
+});
+const updateUserAvatar = updateUserData({
+  fieldsToUpdate: ['avatar'],
+  errorMessage: 'Incorrect data entered when updating the avatar',
+});
 
 module.exports = {
   getUsers,
